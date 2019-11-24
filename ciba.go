@@ -84,23 +84,35 @@ type Token struct {
 	ExpiresIn    int    `json:"expires_in,omitempty"`
 
 	Error string `json:"error,omitempty"`
+
+	claims jwt.MapClaims
 }
 
-func (c *Client) ParseIDToken(idToken string) (jwt.MapClaims, error) {
+func (t *Token) Claims() jwt.MapClaims {
+	return t.claims
+}
+
+const leewayForClockSkew = 10
+
+func (c *Client) parseIDToken(idToken string) (jwt.MapClaims, error) {
 	claims := jwt.MapClaims{}
 	parser := &jwt.Parser{}
 	if _, _, err := parser.ParseUnverified(idToken, claims); err != nil {
 		return nil, err
 	}
 
-	if !claims.VerifyIssuer(c.issuer, true) {
+	if !claims.VerifyIssuer(c.issuer, false) {
 		return nil, errors.New("invalid issuer")
 	}
-	if !claims.VerifyAudience(c.clientID, true) {
+	if !claims.VerifyAudience(c.clientID, false) {
 		return nil, errors.New("invalid audience")
 	}
-	if !claims.VerifyExpiresAt(time.Now().Unix(), true) {
+	now := time.Now().Unix()
+	if !claims.VerifyExpiresAt(now-leewayForClockSkew, false) {
 		return nil, errors.New("token expired")
+	}
+	if !claims.VerifyNotBefore(now+leewayForClockSkew, false) {
+		return nil, errors.New("token is not valid")
 	}
 
 	return claims, nil
@@ -180,6 +192,10 @@ func (c *Client) Authenticate(ctx context.Context, params ...AuthenticationParam
 					continue
 				}
 				return nil, &CIBAError{Status: status, ErrorCode: token.Error}
+			}
+			token.claims, err = c.parseIDToken(token.IDToken)
+			if err != nil {
+				return nil, err
 			}
 			return &token, nil
 		}

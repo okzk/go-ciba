@@ -28,11 +28,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	claims, err := client.ParseIDToken(token.IDToken)
-	if err != nil {
-		panic(err)
-	}
 
+	claims := token.Claims()
 	fmt.Println(claims["sub"])
 }
 ```
