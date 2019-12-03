@@ -119,16 +119,7 @@ func (c *Client) parseIDToken(idToken string) (jwt.MapClaims, error) {
 }
 
 func validateAuthnRequestValues(values url.Values) error {
-	n := 0
-	if _, ok := values["login_hint"]; ok {
-		n += 1
-	}
-	if _, ok := values["login_hint_token"]; ok {
-		n += 1
-	}
-	if _, ok := values["id_token_hint"]; ok {
-		n += 1
-	}
+	n := len(values["login_hint"]) + len(values["login_hint_token"]) + len(values["id_token_hint"])
 	if n == 0 {
 		return errors.New("one of the hints is required")
 	}
