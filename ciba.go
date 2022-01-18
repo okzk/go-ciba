@@ -148,7 +148,7 @@ func (c *Client) Authenticate(ctx context.Context, params ...AuthenticationParam
 		return nil, &CIBAError{Status: status, ErrorCode: authnRes.Error}
 	}
 
-	interval := time.Second
+	interval := 5 * time.Second
 	if authnRes.Interval > 0 {
 		interval = time.Second * time.Duration(authnRes.Interval)
 	}
