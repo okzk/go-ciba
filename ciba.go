@@ -179,7 +179,7 @@ func (c *Client) Authenticate(ctx context.Context, params ...AuthenticationParam
 					continue
 				}
 				if status == http.StatusBadRequest && token.Error == "slow_down" {
-					interval = interval * 5 / 4
+					interval += 5 * time.Second
 					continue
 				}
 				return nil, &CIBAError{Status: status, ErrorCode: token.Error}
